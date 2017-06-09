@@ -20,10 +20,10 @@ class Sensor(object):
 
 class Alarm(object):
 
-  def __init__(self):
-    self._low_pressure_threshold = 17.0
-    self._high_pressure_threshold = 21.0
-    self._sensor = Sensor()
+  def __init__(self, sensor = Sensor(), low_pressure_threshold = 17.0, high_pressure_threshold = 21.0):
+    self._low_pressure_threshold = low_pressure_threshold
+    self._high_pressure_threshold = high_pressure_threshold
+    self._sensor = sensor
     self._is_alarm_on = False
 
   def check(self):
