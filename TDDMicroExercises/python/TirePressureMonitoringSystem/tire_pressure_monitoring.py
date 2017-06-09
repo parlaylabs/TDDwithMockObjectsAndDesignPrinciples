@@ -32,7 +32,7 @@ class Alarm(object):
 
     def check(self):
         psi_pressure_value = self._sensor.pop_next_pressure_psi_value()
-        if psi_pressure_value < self._low_pressure_threshold or self._high_pressure_threshold < psi_pressure_value:
+        if psi_pressure_value < self._low_pressure_threshold or psi_pressure_value > self._high_pressure_threshold:
             self._is_alarm_on = True
 
     @property
