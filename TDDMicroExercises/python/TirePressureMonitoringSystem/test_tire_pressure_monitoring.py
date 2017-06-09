@@ -55,7 +55,7 @@ class AlarmTest(unittest.TestCase):
             [ LOW_PRESSURE_THRESHOLD - EPSILON ])
         self.assertTrue(alarm.is_alarm_on)
 
-    def test_greater_than_low_pressure_threshold(self):
+    def test_greater_than_high_pressure_threshold(self):
         alarm = self.create_checked_alarm(
             [ HIGH_PRESSURE_THRESHOLD + EPSILON ])
         self.assertTrue(alarm.is_alarm_on)
