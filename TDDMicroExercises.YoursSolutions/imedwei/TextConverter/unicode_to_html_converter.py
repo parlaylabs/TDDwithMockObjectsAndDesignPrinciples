@@ -1,8 +1,4 @@
-# This is for Python 2
-import cgi as html_converter
-
-# For Python 3 uncomment this line
-#import html as html_converter
+import html as html_converter
 
 class UnicodeFileToHtmlTextConverter(object):
 
@@ -11,8 +7,11 @@ class UnicodeFileToHtmlTextConverter(object):
 
     def convert_to_html(self):
         f = open(self.full_filename_with_path, "r")
+        return self.convert_to_html_from_iterator(f)
+
+    def convert_to_html_from_iterator(self, iterator):
         html = ""
-        for line in f:
+        for line in iterator:
             line = line.rstrip()
             html += html_converter.escape(line, quote=True)
             html += "<br />"
