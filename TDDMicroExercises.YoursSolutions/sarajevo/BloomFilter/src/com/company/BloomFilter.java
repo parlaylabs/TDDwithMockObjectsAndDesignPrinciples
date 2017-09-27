@@ -1,12 +1,15 @@
 package com.company;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class BloomFilter {
-    private final BloomBufferA bitmap;
+    private final BloomBuffer bitmap;
+    private final List<HashFunction> hashFunctions;
 
-    public BloomFilter(BloomBufferA bitmap, List<HashFunction> hashFunctions) {
+    public BloomFilter(BloomBuffer bitmap, List<HashFunction> hashFunctions) {
         this.bitmap = bitmap;
+        this.hashFunctions = hashFunctions;
     }
 
     public int getBitmapSize() {
@@ -14,10 +17,16 @@ public class BloomFilter {
     }
 
     public void addItem(String word) {
+        Stream<Integer> hashCodes = getHashCodes(word);
+        hashCodes.forEach(bitmap::setBit);
+    }
 
+    private Stream<Integer> getHashCodes(String word) {
+        return hashFunctions.stream().map(hashFunction -> hashFunction.getHashCode(word));
     }
 
     public boolean matchItem(String word) {
-        return false;
+        Stream<Integer> hashCodes = getHashCodes(word);
+        return hashCodes.allMatch(bitmap::readBit);
     }
 }
