@@ -1,68 +1,84 @@
 package com.company;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.stream.Stream;
 
 public class ThresholdTopK {
     private final TopList[] topLists;
 
-    public ThresholdTopK (TopList[] inputTopLists){
+    ThresholdTopK(TopList[] inputTopLists){
        this.topLists = inputTopLists;
     }
 
-    public TopList[] getTopLists() {
+    TopList[] getTopLists() {
         return topLists;
     }
 
-    public int getThresholdForRank(int rank) {
+    int getThresholdForRank(int rank) {
         int sum = 0;
         for (TopList list: topLists) {
-            sum += list.getByRank(rank).get().getCount();
+            Optional<ItemWithFreq> item = list.getByRank(rank);
+            if (item.isPresent()) {
+                sum += item.get().getCount();
+            }
         }
         return sum;
     }
 
-    public int getCountForItem(String key) {
+    int getCountForItem(String key) {
        int sum = 0;
-       for (TopList list: topLists){
-           sum += list.getByKey(key).get().getCount();
+       for (TopList list: topLists) {
+           Optional<ItemWithFreq> item = list.getByKey(key);
+           if (item.isPresent()) {
+               sum += item.get().getCount();
+           }
        }
        return sum;
     }
 
-    public List<ItemWithFreq> getTopK(int k) {
+    List<ItemWithFreq> getTopK(int k) {
         List<ItemWithFreq> topK = new ArrayList<>();
         Set<String> seen = new HashSet<>();
-        List<ItemWithFreq> buffer = new ArrayList<>();
-        int rank=0;
-        while (k > 0) {
-            int threshold = getThresholdForRank(rank);
-            for (TopList topList: topLists) {
-                if (topList.size() > rank) {
-                    ItemWithFreq item = topList.getByRank(rank).get();
-                    String key = item.getKey();
-                    if (seen.add(key)) {
-                        buffer.add(new ItemWithFreq(key, getCountForItem(key)));
-                    }
+        PriorityQueue<ItemWithFreq> buffer = new PriorityQueue<>(k, Comparator.comparingInt(ItemWithFreq::getCount));
+        for (int rank = 0, maxRank = getMaxRank(); rank < maxRank && topK.size() < k; ++rank) {
+            Stream<ItemWithFreq> itemsWithRank = getItemsWithRank(rank);
+            itemsWithRank.forEach(item -> {
+                String key = item.getKey();
+                if (seen.add(key)) {
+                    buffer.add(new ItemWithFreq(key, getCountForItem(key)));
                 }
-            }
-            if (threshold == 0) {
-                break;
-            }
-            buffer.sort((a,b) -> b.getCount() - a.getCount());
-            List<ItemWithFreq> tmpBuffer = new ArrayList<>(buffer);
-            for (ItemWithFreq item: buffer) {
-                if (item.getCount() >= threshold && k > 0) {
-                    topK.add(item);
-                    tmpBuffer.remove(item);
-                    k--;
-                } else {
-                    break;
-                }
-            }
-            buffer = tmpBuffer;
-            rank++;
+            });
+            moveBufferItemsToTopK(topK, buffer, getThresholdForRank(rank));
         }
         return topK;
+    }
+
+    private int getMaxRank() {
+        return Arrays.stream(topLists).map(TopList::size).max(Integer::compareTo).orElse(0);
+    }
+
+    private Stream<ItemWithFreq> getItemsWithRank(final int rank) {
+        return Arrays.stream(topLists).map(topList -> topList.getByRank(rank))
+                .filter(Optional::isPresent).map(Optional::get);
+    }
+
+    private void moveBufferItemsToTopK(List<ItemWithFreq> topK, PriorityQueue<ItemWithFreq> buffer, int threshold) {
+        boolean bufferItemIsTopK;
+        do {
+            Optional<ItemWithFreq> topItem = Optional.ofNullable(buffer.peek());
+            bufferItemIsTopK = topItem.isPresent() && topItem.get().getCount() >= threshold;
+            if (bufferItemIsTopK) {
+                topK.add(topItem.get());
+                buffer.remove(topItem.get());
+            }
+        } while (bufferItemIsTopK);
     }
 }
 

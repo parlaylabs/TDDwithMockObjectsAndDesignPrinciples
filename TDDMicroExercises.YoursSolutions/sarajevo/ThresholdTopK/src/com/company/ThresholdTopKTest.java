@@ -4,6 +4,10 @@ package com.company;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,42 +87,48 @@ public class ThresholdTopKTest {
 
     @Test
     public void testGetTopKForSingleList() {
-        ItemWithFreq elmo = new ItemWithFreq(ELMO, 40);
-        ItemWithFreq barby = new ItemWithFreq(BARBY, 30);
-        ItemWithFreq goku = new ItemWithFreq(GOKU, 20);
         ThresholdTopK thresholdTopK = createThresholdTopK(new TopList[] {
                 createTopList(new ItemWithFreq[]{
-                        elmo, barby, goku
+                        new ItemWithFreq(ELMO, 40),
+                        new ItemWithFreq(BARBY, 30),
+                        new ItemWithFreq(GOKU, 20)
                 })
         });
         int k = 2;
         List<ItemWithFreq> topK = thresholdTopK.getTopK(k);
-        assertEquals(k, topK.size());
-        assertEquals(elmo.getKey(), topK.get(0).getKey());
-        assertEquals(barby.getKey(), topK.get(1).getKey());
+        ItemWithFreq[] expected = new ItemWithFreq[] {
+            new ItemWithFreq(ELMO, 40),
+            new ItemWithFreq(BARBY, 30)
+        };
+        expectTopK(expected, topK);
     }
 
     @Test
     public void testGetTopKForMultipleLists() {
-        ItemWithFreq elmo = new ItemWithFreq(ELMO, 40);
-        ItemWithFreq barby = new ItemWithFreq(BARBY, 30);
-        ItemWithFreq goku = new ItemWithFreq(GOKU, 20);
-        ItemWithFreq barby2 = new ItemWithFreq(BARBY, 50);
-        ItemWithFreq elmo2 = new ItemWithFreq(ELMO, 20);
-        ItemWithFreq goku2 = new ItemWithFreq(GOKU, 10);
         ThresholdTopK thresholdTopK = createThresholdTopK(new TopList[] {
                 createTopList(new ItemWithFreq[]{
-                        elmo, barby, goku
+                        new ItemWithFreq(ELMO, 40),
+                        new ItemWithFreq(BARBY, 30),
+                        new ItemWithFreq(GOKU, 20)
                 }),
                 createTopList(new ItemWithFreq[]{
-                        barby2, elmo2, goku2
+                        new ItemWithFreq(BARBY, 50),
+                        new ItemWithFreq(ELMO, 20),
+                        new ItemWithFreq(GOKU, 10)
                 })
         });
         int k = 2;
         List<ItemWithFreq> topK = thresholdTopK.getTopK(k);
-        assertEquals(k, topK.size());
-        assertEquals(barby.getKey(), topK.get(0).getKey());
-        assertEquals(elmo.getKey(), topK.get(1).getKey());
+        ItemWithFreq[] expected = new ItemWithFreq[] {
+            new ItemWithFreq(BARBY, 80),
+            new ItemWithFreq(ELMO, 60)
+        };
+        expectTopK(expected, topK);
+    }
+
+    private void expectTopK(ItemWithFreq[] expected, List<ItemWithFreq> topK) {
+        Collections.sort(topK);
+        assertArrayEquals(expected, topK.toArray());
     }
 
     private void addItem(TopList topList, int rank, ItemWithFreq item){
